@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   sql-client:
-    image: fhueske/flink-sql-training-client:2-FLINK-1.11-scala_2.11
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-client:2-FLINK-1.11-scala_2.11
     build: ./images/client-image
     command: "java -classpath /opt/data/data-producer.jar com.ververica.sql_training.data_producer.TaxiRecordProducer --input file /opt/data --output kafka kafka:9092 --speedup 10.0"
     depends_on:
@@ -15,7 +15,7 @@ services:
       KAFKA_BOOTSTRAP: kafka
       MYSQL_HOST: mysql
   jobmanager:
-    image: fhueske/flink-sql-training-flink-s3:1.11.1-scala_2.11
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.11.1-scala_2.11
     build: ./images/flink-image
     hostname: "jobmanager"
     expose:
@@ -26,7 +26,7 @@ services:
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
   taskmanager:
-    image: fhueske/flink-sql-training-flink-s3:1.11.1-scala_2.11
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.11.1-scala_2.11
     build: ./images/flink-image
     expose:
       - "6121"
@@ -39,17 +39,17 @@ services:
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
   zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/zookeeper:3.5
     ports:
       - "2181:2181"
   kafka:
-    image: wurstmeister/kafka:2.12-2.2.1
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_kafka:2.12-2.2.2
     ports:
       - "9092:9092"
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_HOST_NAME: "localhost"
       KAFKA_ADVERTISED_PORT: "9092"
       HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -57,7 +57,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   mysql:
-    image: mysql:8.0.19
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/mysql:8.0.19
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_USER: "flink"
@@ -67,7 +67,7 @@ services:
     volumes:
       - ./mysql:/docker-entrypoint-initdb.d
   minio:
-    image: minio/minio:latest
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/minio
     entrypoint: sh
     command: -c 'mkdir -p /data/sql-training && /usr/bin/minio server /data'
     environment:
