@@ -34,9 +34,9 @@ RUN cd /opt/data-producer; \
 # Build SQL Playground Image
 ###############################################################################
 
-FROM registry.cn-shanghai.aliyuncs.com/sq_1620289/flink:1.11.1-scala_2.11
+FROM registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_flink:1.18.1-scala_2.12-java8
 
-ARG FLINK_VERSION=1.11.1
+ARG FLINK_VERSION=1.18.1
 
 ADD VERSION .
 
@@ -50,12 +50,13 @@ COPY --from=builder /opt/sql-udfs/target/sql-training-udfs-*.jar /opt/sql-client
 COPY --from=builder /opt/data-producer/target/sql-training-data-producer-*.jar /opt/data/data-producer.jar
 
 # Download connector libraries
+
 RUN wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-json/${FLINK_VERSION}/flink-json-${FLINK_VERSION}.jar; \
-    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-sql-connector-kafka_2.11/${FLINK_VERSION}/flink-sql-connector-kafka_2.11-${FLINK_VERSION}.jar; \
-    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-connector-filesystem_2.11/${FLINK_VERSION}/flink-connector-filesystem_2.11-${FLINK_VERSION}.jar; \
+    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-sql-connector-kafka/3.0.1-1.18/flink-sql-connector-kafka-3.0.1-1.18.jar; \
+    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-connector-filesystem_2.11/1.11.1/flink-connector-filesystem_2.11-1.11.1.jar; \
     wget -P /opt/flink/lib https://maven.aliyun.com/repository/public/org/apache/flink/flink-shaded-hadoop-2-uber/2.7.5-8.0/flink-shaded-hadoop-2-uber-2.7.5-8.0.jar; \
-    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-connector-jdbc_2.11/${FLINK_VERSION}/flink-connector-jdbc_2.11-${FLINK_VERSION}.jar; \
-    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar; \
+    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/org/apache/flink/flink-connector-jdbc_2.11/1.11.1/flink-connector-jdbc_2.11-1.11.1.jar; \
+    wget -P /opt/sql-client/lib/ https://maven.aliyun.com/repository/public/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar; \
 # Create data folders
     mkdir -p /opt/data; \
     mkdir -p /opt/data/stream;

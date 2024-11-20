@@ -18,12 +18,13 @@
 # Build Flink images with configured S3 plugin
 ###############################################################################
 
-FROM registry.cn-shanghai.aliyuncs.com/sq_1620289/flink:1.11.1-scala_2.11
+FROM registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_flink:1.18.1-scala_2.12-java8
 
 # move and download dependencies
 RUN mkdir /opt/flink/plugins/s3; \
-    mv /opt/flink/opt/flink-s3-fs-hadoop-1.11.1.jar /opt/flink/plugins/s3; \
-    wget -P /opt/flink/lib https://maven.aliyun.com/repository/public/org/apache/flink/flink-shaded-hadoop-2-uber/2.7.5-8.0/flink-shaded-hadoop-2-uber-2.7.5-8.0.jar;
+    mv /opt/flink/opt/flink-s3-fs-hadoop-1.18.1.jar /opt/flink/plugins/s3; \
+    wget -P /opt/flink/lib https://maven.aliyun.com/repository/public/org/apache/flink/flink-shaded-hadoop-2-uber/2.7.5-8.0/flink-shaded-hadoop-2-uber-2.7.5-8.0.jar; \
+    wget -P /opt/flink/lib https://maven.aliyun.com/repository/public/org/apache/flink/flink-sql-connector-kafka/3.0.1-1.18/flink-sql-connector-kafka-3.0.1-1.18.jar;
 
 # adjust configuration
 RUN echo "s3.access-key: flink-sql" >> /opt/flink/conf/flink-conf.yaml; \

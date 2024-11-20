@@ -1,7 +1,8 @@
 version: '2.1'
 services:
   sql-client:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-client:2-FLINK-1.11-scala_2.11
+    container_name: sql-client
+    image:  registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-client:1.18.1-scala_2.12
     build: ./images/client-image
     command: "java -classpath /opt/data/data-producer.jar com.ververica.sql_training.data_producer.TaxiRecordProducer --input file /opt/data --output kafka kafka:9092 --speedup 10.0"
     depends_on:
@@ -9,13 +10,17 @@ services:
       - jobmanager
       - mysql
       - minio
+    links:
+      - jobmanager:jobmanager
     environment:
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
       FLINK_JOBMANAGER_HOST: jobmanager
       ZOOKEEPER_CONNECT: zookeeper
       KAFKA_BOOTSTRAP: kafka
       MYSQL_HOST: mysql
   jobmanager:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.11.1-scala_2.11
+    container_name: jobmanager
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.18.1-scala_2.12
     build: ./images/flink-image
     hostname: "jobmanager"
     expose:
@@ -26,7 +31,8 @@ services:
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
   taskmanager:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.11.1-scala_2.11
+    container_name: taskmanager
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/flink-sql-training-flink-s3:1.18.1-scala_2.12
     build: ./images/flink-image
     expose:
       - "6121"
@@ -37,27 +43,40 @@ services:
     links:
       - jobmanager:jobmanager
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 10
   zookeeper:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/zookeeper:3.5
+    container_name: zookeeper
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_zookeeper:3.5
     ports:
       - "2181:2181"
   kafka:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_kafka:2.12-2.2.2
+    container_name: kafka
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_bitnami_kafka:3.3
+    hostname: kafka
     ports:
       - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+#      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+      KAFKA_ADVERTISED_PORT: 9092
+#      KAFKA_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_LISTENERS: "INTERNAL://kafka:9090, EXTERNAL://:9092"
+#      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:9090, EXTERNAL://:9092"
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT, EXTERNAL:PLAINTEXT"
+#      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+#      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "Rides:1:1, Fares:1:1, DriverChanges:1:1"
     depends_on:
       - zookeeper
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: "localhost"
-      KAFKA_ADVERTISED_PORT: "9092"
-      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "Rides:1:1, Fares:1:1, DriverChanges:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   mysql:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/mysql:8.0.19
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_mysql:8.0.29-oracle
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_USER: "flink"
@@ -67,12 +86,12 @@ services:
     volumes:
       - ./mysql:/docker-entrypoint-initdb.d
   minio:
-    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/minio
+    image: registry.cn-shanghai.aliyuncs.com/sq_1620289/linux_arm64_minio:latest
     entrypoint: sh
     command: -c 'mkdir -p /data/sql-training && /usr/bin/minio server /data'
     environment:
-      - MINIO_ACCESS_KEY=flink-sql
-      - MINIO_SECRET_KEY=flink-sql
+      - MINIO_ROOT_USER=flink-sql
+      - MINIO_ROOT_PASSWORD=flink-sql
     expose:
       - "9000"
     ports:
